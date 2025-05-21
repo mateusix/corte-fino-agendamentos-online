@@ -30,19 +30,19 @@ export const barbers: Barber[] = [
     id: "1",
     name: "Miguel Santos",
     specialty: "Corte Moderno, Barba",
-    image: "https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=300"
+    image: "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?q=80&w=300"
   },
   {
     id: "2",
     name: "Felipe Costa",
     specialty: "Corte Clássico, Tratamentos",
-    image: "https://images.unsplash.com/photo-1599351431809-9a5d0bddb87c?q=80&w=300"
+    image: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=300"
   },
   {
     id: "3",
     name: "Rafael Silva",
     specialty: "Corte Degradê, Barba",
-    image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=300"
+    image: "https://images.unsplash.com/photo-1504006833117-8886a355efbf?q=80&w=300"
   }
 ];
 
