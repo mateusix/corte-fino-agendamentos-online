@@ -1,72 +1,98 @@
-
 import { useState } from "react";
-import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 
-import { barbers, services, useAppointments } from "../context/AppointmentContext";
+import { barbers, services } from "../context/AppointmentContext";
 
 const BookingPage = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedBarber, setSelectedBarber] = useState<string | null>(null);
   const [selectedService, setSelectedService] = useState<string | null>(null);
-  const { addAppointment } = useAppointments();
   const navigate = useNavigate();
 
-  // Generate available time slots between 9am and 8pm with 30min intervals
+  // Gera horários de 09:00 até 19:30, com intervalos de 30 minutos
   const generateTimeSlots = () => {
-    const slots = [];
-    const start = 9; // 9am
-    const end = 20; // 8pm
-
-    for (let hour = start; hour < end; hour++) {
-      slots.push(`${hour}:00`);
-      slots.push(`${hour}:30`);
+    const slots: string[] = [];
+    const startHour = 9;
+    const endHour = 20; // Até 20h (exclusivo)
+    for (let hour = startHour; hour < endHour; hour++) {
+      slots.push(`${String(hour).padStart(2, "0")}:00`);
+      slots.push(`${String(hour).padStart(2, "0")}:30`);
     }
     return slots;
   };
 
   const timeSlots = generateTimeSlots();
 
-  const handleBookingSubmit = () => {
+  const handleBookingSubmit = async () => {
     if (!selectedDate || !selectedTime || !selectedBarber || !selectedService) {
       toast.error("Por favor, preencha todos os campos");
       return;
     }
 
-    // Create appointment date by combining selected date with time
-    const [hours, minutes] = selectedTime.split(':').map(Number);
+    const [hours, minutes] = selectedTime.split(":").map(Number);
     const appointmentDate = new Date(selectedDate);
-    appointmentDate.setHours(hours, minutes);
+    appointmentDate.setHours(hours, minutes, 0, 0);
 
-    const barber = barbers.find((b) => b.id === selectedBarber);
-    const service = services.find((s) => s.id === selectedService)?.name;
+    // Formato ISO para data e horário separado
+    const formattedDate = appointmentDate.toISOString().split("T")[0];
+    const formattedTime = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
 
-    if (!barber || !service) {
+    const barberObj = barbers.find((b) => b.id === selectedBarber);
+    const serviceObj = services.find((s) => s.id === selectedService);
+
+    if (!barberObj || !serviceObj) {
       toast.error("Dados inválidos");
       return;
     }
 
-    addAppointment({
-      date: appointmentDate,
-      barber,
-      service
-    });
+    const appointmentData = {
+      data: formattedDate,
+      horario: formattedTime,
+      barbeiro: barberObj.name,
+      tipo_servico: serviceObj.name,
+    };
 
-    toast.success("Agendamento realizado com sucesso!");
-    navigate("/meus-agendamentos");
+    try {
+      const response = await fetch("http://localhost:5000/agendamentos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(appointmentData),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Erro HTTP ${response.status}: ${errorText}`);
+      }
+
+      toast.success("Agendamento criado com sucesso!");
+      navigate("/meus-agendamentos");
+    } catch (error) {
+      console.error("Erro ao criar agendamento:", error);
+      toast.error("Erro ao criar agendamento");
+    }
   };
 
   return (
     <div className="container mx-auto py-10 px-4 animate-fade-in">
       <h1 className="text-3xl md:text-4xl font-bold mb-2">Agende seu horário</h1>
-      <p className="text-gray-600 mb-8">Escolha a data, hora e profissional para seu atendimento.</p>
+      <p className="text-gray-600 mb-8">
+        Escolha a data, hora e profissional para seu atendimento.
+      </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-2">
@@ -93,11 +119,13 @@ const BookingPage = () => {
                   {timeSlots.map((time) => (
                     <button
                       key={time}
+                      type="button"
                       onClick={() => setSelectedTime(time)}
+                      disabled={!selectedDate}
                       className={`p-2 text-sm rounded-md transition-colors ${
                         selectedTime === time
                           ? "bg-barber-blue text-white"
-                          : "bg-gray-100 hover:bg-gray-200"
+                          : "bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                       }`}
                     >
                       {time}
@@ -111,69 +139,50 @@ const BookingPage = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Selecione o serviço e barbeiro</CardTitle>
+            <CardTitle>Profissional e Serviço</CardTitle>
+            <CardDescription>Escolha o profissional e serviço desejado</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium mb-3">Serviço</h3>
-              <div className="space-y-2">
-                {services.map((service) => (
-                  <button
-                    key={service.id}
-                    onClick={() => setSelectedService(service.id)}
-                    className={`w-full p-3 text-left rounded-md transition-colors ${
-                      selectedService === service.id
-                        ? "bg-barber-blue text-white"
-                        : "bg-gray-100 hover:bg-gray-200"
-                    }`}
-                  >
-                    <div className="font-medium">{service.name}</div>
-                    <div className="text-sm opacity-80">{service.duration} minutos</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            <Separator />
-            
-            <div>
-              <h3 className="text-lg font-medium mb-3">Barbeiro</h3>
-              <div className="space-y-2">
+          <CardContent>
+            <div className="mb-4">
+              <label htmlFor="barber" className="block font-medium mb-1">
+                Profissional
+              </label>
+              <select
+                id="barber"
+                value={selectedBarber ?? ""}
+                onChange={(e) => setSelectedBarber(e.target.value)}
+                className="w-full rounded-md border p-2"
+              >
+                <option value="">Selecione um profissional</option>
                 {barbers.map((barber) => (
-                  <button
-                    key={barber.id}
-                    onClick={() => setSelectedBarber(barber.id)}
-                    className={`w-full p-3 text-left rounded-md flex items-center gap-3 transition-colors ${
-                      selectedBarber === barber.id
-                        ? "bg-barber-blue text-white"
-                        : "bg-gray-100 hover:bg-gray-200"
-                    }`}
-                  >
-                    <img 
-                      src={barber.image} 
-                      alt={barber.name} 
-                      className="w-10 h-10 rounded-full object-cover" 
-                    />
-                    <div>
-                      <div className="font-medium">{barber.name}</div>
-                      <div className="text-sm opacity-80">{barber.specialty}</div>
-                    </div>
-                  </button>
+                  <option key={barber.id} value={barber.id}>
+                    {barber.name} - {barber.specialty}
+                  </option>
                 ))}
-              </div>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="service" className="block font-medium mb-1">
+                Serviço
+              </label>
+              <select
+                id="service"
+                value={selectedService ?? ""}
+                onChange={(e) => setSelectedService(e.target.value)}
+                className="w-full rounded-md border p-2"
+              >
+                <option value="">Selecione um serviço</option>
+                {services.map((service) => (
+                  <option key={service.id} value={service.id}>
+                    {service.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </CardContent>
           <CardFooter>
-            <Button 
-              onClick={handleBookingSubmit}
-              className={`w-full ${
-                (!selectedDate || !selectedTime || !selectedBarber || !selectedService) 
-                ? 'opacity-70 cursor-not-allowed' 
-                : ''
-              }`}
-              disabled={!selectedDate || !selectedTime || !selectedBarber || !selectedService}
-            >
-              Confirmar Agendamento
+            <Button onClick={handleBookingSubmit} className="w-full">
+              Agendar
             </Button>
           </CardFooter>
         </Card>

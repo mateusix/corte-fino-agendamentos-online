@@ -1,32 +1,55 @@
-
-import { useState } from "react";
-import { format } from "date-fns";
+import React from "react";
+import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Link } from "react-router-dom";
-import { Appointment, useAppointments } from "../context/AppointmentContext";
+import { useAppointments, Appointment } from "../context/AppointmentContext";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { toast } from "sonner";
 
-const AppointmentCard = ({ appointment, onCancel }: { appointment: Appointment, onCancel: (id: string) => void }) => {
-  const [isDeleting, setIsDeleting] = useState(false);
+const AppointmentCard = ({
+  appointment,
+  onCancel,
+}: {
+  appointment: Appointment;
+  onCancel: (id: string) => void;
+}) => {
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
   const handleCancel = () => {
     setIsDeleting(true);
-    setTimeout(() => {
-      onCancel(appointment.id);
-      toast.success("Agendamento cancelado com sucesso");
-    }, 300);
+    onCancel(appointment.id);
+    toast.success("Agendamento cancelado com sucesso");
   };
 
+  // Cria um objeto Date correto a partir do campo date (ISO string)
+  const dateObj = new Date(appointment.date);
+
+  // DEBUG: para verificar a estrutura dos dados
+  // console.log("Appointment:", appointment);
+
   return (
-    <Card className={`animate-fade-in transition-opacity ${isDeleting ? 'opacity-0' : 'opacity-100'}`}>
+    <Card
+      className={`animate-fade-in transition-opacity ${
+        isDeleting ? "opacity-0" : "opacity-100"
+      }`}
+    >
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
             <CardTitle>{appointment.service}</CardTitle>
             <CardDescription>
-              {format(appointment.date, "EEEE, dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+              {isValid(dateObj)
+                ? format(dateObj, "EEEE, dd 'de' MMMM 'às' HH:mm", {
+                    locale: ptBR,
+                  })
+                : "Data inválida"}
             </CardDescription>
           </div>
           <Button variant="destructive" size="sm" onClick={handleCancel}>
@@ -36,11 +59,13 @@ const AppointmentCard = ({ appointment, onCancel }: { appointment: Appointment, 
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-4">
-          <img 
-            src={appointment.barber.image} 
-            alt={appointment.barber.name} 
-            className="w-12 h-12 rounded-full object-cover" 
+          {/* Imagem do barbeiro */}
+          <img
+            src={appointment.barber.image}
+            alt={appointment.barber.name}
+            className="w-12 h-12 rounded-full object-cover"
           />
+          {/* Nome e especialidade do barbeiro */}
           <div>
             <p className="font-medium">{appointment.barber.name}</p>
             <p className="text-sm text-gray-500">{appointment.barber.specialty}</p>
@@ -62,10 +87,10 @@ const AppointmentsPage = () => {
       {appointments.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {appointments.map((appointment) => (
-            <AppointmentCard 
-              key={appointment.id} 
-              appointment={appointment} 
-              onCancel={cancelAppointment} 
+            <AppointmentCard
+              key={appointment.id}
+              appointment={appointment}
+              onCancel={cancelAppointment}
             />
           ))}
         </div>
