@@ -13,6 +13,14 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 
+function normalizeName(name: string) {
+  return name
+    .trim()
+    .toLowerCase()
+    .normalize("NFD") // separa acentos
+    .replace(/[\u0300-\u036f]/g, ""); // remove acentos
+}
+
 const AppointmentCard = ({
   appointment,
   onCancel,
@@ -28,11 +36,20 @@ const AppointmentCard = ({
     toast.success("Agendamento cancelado com sucesso");
   };
 
-  // Cria um objeto Date correto a partir do campo date (ISO string)
-  const dateObj = new Date(appointment.date);
+  // Normaliza o nome do barbeiro para garantir match
+  const normalizedBarberName = normalizeName(appointment.barber.name);
 
-  // DEBUG: para verificar a estrutura dos dados
-  // console.log("Appointment:", appointment);
+  const barberImages: Record<string, string> = {
+    joao:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGTwCDUPfkJUXZhPuplN6Z3ehOvtOSGqLYxCCLtyB8Mku4V7oilECG0Y0m625Y79Iad9I&usqp=CAU",
+    pedro:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWN9perBtZjeRgkWlu_6ZwcIemYT9uafX1vD5emVx_1lC3gTX333Jni7nH-qjPY4EHGcY&usqp=CAU",
+  };
+
+  const imageUrl =
+    barberImages[normalizedBarberName] ?? "https://via.placeholder.com/48?text=?";
+
+  const dateObj = new Date(appointment.date);
 
   return (
     <Card
@@ -59,16 +76,13 @@ const AppointmentCard = ({
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-4">
-          {/* Imagem do barbeiro */}
           <img
-            src={appointment.barber.image}
+            src={imageUrl}
             alt={appointment.barber.name}
             className="w-12 h-12 rounded-full object-cover"
           />
-          {/* Nome e especialidade do barbeiro */}
           <div>
             <p className="font-medium">{appointment.barber.name}</p>
-            <p className="text-sm text-gray-500">{appointment.barber.specialty}</p>
           </div>
         </div>
       </CardContent>

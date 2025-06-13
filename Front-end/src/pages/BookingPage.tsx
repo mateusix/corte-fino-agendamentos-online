@@ -66,7 +66,7 @@ const BookingPage = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:5000/agendamentos", {
+      const response = await fetch("http://localhost:8800/api/agendamentos", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -83,7 +83,7 @@ const BookingPage = () => {
       navigate("/meus-agendamentos");
     } catch (error) {
       console.error("Erro ao criar agendamento:", error);
-      toast.error("Erro ao criar agendamento");
+      toast.error("Erro ao criar agendamento, esse horario esta indisponivel!");
     }
   };
 

@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import { barbers } from '../context/AppointmentContext';
 
@@ -47,24 +46,37 @@ const HomePage = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {barbers.map((barber) => (
-              <div key={barber.id} className="card overflow-hidden flex flex-col">
-                <div className="h-64 overflow-hidden">
-                  <img 
-                    src={barber.image} 
-                    alt={barber.name} 
-                    className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
-                  />
-                </div>
-                <div className="p-6 flex-1">
-                  <h3 className="text-xl font-semibold mb-2">{barber.name}</h3>
-                  <p className="text-gray-600 mb-4">{barber.specialty}</p>
-                  <Link to="/agendar" className="text-barber-blue font-medium hover:underline">
-                    Agendar com {barber.name.split(" ")[0]} →
-                  </Link>
-                </div>
-              </div>
-            ))}
+            {barbers.length > 0 ? (
+              barbers.map((barber, index) => {
+                let imageUrl = "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?q=80&w=800";
+                if (index === 0) {
+                  imageUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGTwCDUPfkJUXZhPuplN6Z3ehOvtOSGqLYxCCLtyB8Mku4V7oilECG0Y0m625Y79Iad9I&usqp=CAU";
+                } else if (index === 1) {
+                  imageUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWN9perBtZjeRgkWlu_6ZwcIemYT9uafX1vD5emVx_1lC3gTX333Jni7nH-qjPY4EHGcY&usqp=CAU";
+                }
+
+                return (
+                  <div key={barber.id} className="card overflow-hidden flex flex-col">
+                    <div className="h-64 overflow-hidden">
+                      <img 
+                        src={imageUrl}
+                        alt={barber.name} 
+                        className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
+                      />
+                    </div>
+                    <div className="p-6 flex-1">
+                      <h3 className="text-xl font-semibold mb-2">{barber.name}</h3>
+                      <p className="text-gray-600 mb-4">{barber.specialty}</p>
+                      <Link to="/agendar" className="text-barber-blue font-medium hover:underline">
+                        Agendar com {barber.name.split(" ")[0]} →
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="col-span-full text-center text-gray-500">Nenhum barbeiro disponível no momento.</p>
+            )}
           </div>
         </div>
       </section>
